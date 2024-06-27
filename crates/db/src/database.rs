@@ -15,8 +15,8 @@ use common::publish_metadata::PublishMetadata;
 use common::version::Version;
 use entity::{
     auth_token, crate_author, crate_author_to_crate, crate_category, crate_category_to_crate,
-    crate_index, crate_keyword, crate_keyword_to_crate, crate_meta, cratesio_crate, cratesio_index,
-    cratesio_meta, doc_queue, krate, owner, prelude::*, session, user,
+    crate_index, crate_keyword, crate_keyword_to_crate, crate_meta, crate_user, cratesio_crate,
+    cratesio_index, cratesio_meta, doc_queue, krate, owner, prelude::*, session, user,
 };
 use migration::iden::{AuthTokenIden, CrateIden, CrateMetaIden, CratesIoIden, CratesIoMetaIden};
 use sea_orm::sea_query::{Alias, Expr, Query, *};
@@ -818,6 +818,34 @@ impl DbProvider for Database {
         Ok(())
     }
 
+    async fn is_crate_user(&self, crate_name: &NormalizedName, user: &str) -> DbResult<bool> {
+        let restricted_download = krate::Entity::find()
+            .filter(krate::Column::Name.eq(crate_name.to_string()))
+            .one(&self.db_con)
+            .await?
+            .map(|model| model.restricted_download);
+
+        if match restricted_download {
+            Some(restricted) => !restricted,
+            None => true,
+        } {
+            return Ok(true);
+        }
+
+        let user = crate_user::Entity::find()
+            .join(JoinType::InnerJoin, crate_user::Relation::Krate.def())
+            .join(JoinType::InnerJoin, crate_user::Relation::User.def())
+            .filter(
+                Cond::all()
+                    .add(krate::Column::Name.eq(crate_name.to_string()))
+                    .add(user::Column::Name.eq(user)),
+            )
+            .one(&self.db_con)
+            .await?;
+
+        Ok(user.is_some())
+    }
+
     async fn is_owner(&self, crate_name: &NormalizedName, user: &str) -> DbResult<bool> {
         let owner = owner::Entity::find()
             .join(JoinType::InnerJoin, owner::Relation::Krate.def())
@@ -847,6 +875,25 @@ impl DbProvider for Database {
         let u = user::Entity::find()
             .join(JoinType::InnerJoin, user::Relation::Owner.def())
             .join(JoinType::InnerJoin, owner::Relation::Krate.def())
+            .filter(Expr::col((CrateIden::Table, krate::Column::Name)).eq(crate_name.to_string()))
+            .all(&self.db_con)
+            .await?;
+
+        Ok(u.into_iter()
+            .map(|u| User {
+                id: u.id as i32,
+                name: u.name,
+                pwd: u.pwd,
+                salt: u.salt,
+                is_admin: u.is_admin,
+            })
+            .collect())
+    }
+
+    async fn get_crate_users(&self, crate_name: &NormalizedName) -> DbResult<Vec<User>> {
+        let u = user::Entity::find()
+            .join(JoinType::InnerJoin, user::Relation::Owner.def())
+            .join(JoinType::InnerJoin, crate_user::Relation::Krate.def())
             .filter(Expr::col((CrateIden::Table, krate::Column::Name)).eq(crate_name.to_string()))
             .all(&self.db_con)
             .await?;
@@ -1369,7 +1416,10 @@ impl DbProvider for Database {
                             Expr::col(CratesIoIden::Description),
                             Alias::new("description"),
                         )
-                        .expr_as(Expr::col(CratesIoMetaIden::Documentation), Alias::new("documentation"))
+                        .expr_as(
+                            Expr::col(CratesIoMetaIden::Documentation),
+                            Alias::new("documentation"),
+                        )
                         .expr_as(Expr::cust("true"), Alias::new("is_cache"))
                         .from(CratesIoMetaIden::Table)
                         .inner_join(
@@ -1659,6 +1709,7 @@ impl DbProvider for Database {
                     description: Set(pub_metadata.description.clone()),
                     repository: Set(pub_metadata.repository.clone()),
                     e_tag: Set("".to_string()), // Set to empty string, as it can be computed, when the crate index is inserted
+                    restricted_download: Set(false),
                 };
                 let krate = krate.insert(&self.db_con).await?;
                 krate.id
@@ -1883,8 +1934,7 @@ impl DbProvider for Database {
                     crates_io_fk: Set(krate.id),
                     documentation: Set(Some(format!(
                         "https://docs.rs/{}/{}",
-                        normalized_name,
-                        index.vers,
+                        normalized_name, index.vers,
                     ))),
                 };
 

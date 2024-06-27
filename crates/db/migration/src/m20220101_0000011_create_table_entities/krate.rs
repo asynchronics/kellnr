@@ -23,6 +23,7 @@ pub struct Model {
     #[sea_orm(column_type = "Text")]
     pub original_name: String,
     pub e_tag: String,
+    pub restricted_download: bool,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]

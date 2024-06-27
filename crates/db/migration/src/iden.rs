@@ -36,6 +36,7 @@ pub enum CrateIden {
     Homepage,
     Repository,
     ETag,
+    RestrictedDownload,
 }
 
 #[derive(Iden)]

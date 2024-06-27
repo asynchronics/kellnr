@@ -8,6 +8,26 @@ pub struct Migration;
 #[async_trait::async_trait]
 impl MigrationTrait for Migration {
     async fn up(&self, manager: &SchemaManager) -> Result<(), DbErr> {
+        // Manual check if the column exists is needed, as Sqlite does not support
+        // ALTER TABLE IF COLUMN EXISTS. Without the check, the migration would fail
+        // on Sqlite with an "duplicate column" error.
+
+        if !manager.has_column("krate", "restricted_download").await? {
+            manager
+                .alter_table(
+                    Table::alter()
+                        .table(CrateIden::Table)
+                        .add_column_if_not_exists(
+                            ColumnDef::new(CrateIden::RestrictedDownload)
+                                .boolean()
+                                .not_null()
+                                .default(false),
+                        )
+                        .to_owned(),
+                )
+                .await?;
+        }
+
         manager
             .create_table(
                 Table::create()
@@ -54,6 +74,15 @@ impl MigrationTrait for Migration {
     async fn down(&self, manager: &SchemaManager) -> Result<(), DbErr> {
         manager
             .drop_table(Table::drop().table(CrateUserIden::Table).to_owned())
+            .await?;
+
+        manager
+            .alter_table(
+                Table::alter()
+                    .table(CrateIden::Table)
+                    .drop_column(CrateIden::RestrictedDownload)
+                    .to_owned(),
+            )
             .await
     }
 }

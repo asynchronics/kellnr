@@ -38,9 +38,11 @@ pub trait DbProvider: Send + Sync {
     async fn validate_session(&self, session_token: &str) -> DbResult<(String, bool)>;
     async fn add_session_token(&self, name: &str, session_token: &str) -> DbResult<()>;
     async fn add_owner(&self, crate_name: &NormalizedName, owner: &str) -> DbResult<()>;
+    async fn is_crate_user(&self, crate_name: &NormalizedName, user: &str) -> DbResult<bool>;
     async fn is_owner(&self, crate_name: &NormalizedName, user: &str) -> DbResult<bool>;
     async fn get_crate_id(&self, crate_name: &NormalizedName) -> DbResult<Option<i64>>;
     async fn get_crate_owners(&self, crate_name: &NormalizedName) -> DbResult<Vec<User>>;
+    async fn get_crate_users(&self, crate_name: &NormalizedName) -> DbResult<Vec<User>>;
     async fn delete_session_token(&self, session_token: &str) -> DbResult<()>;
     async fn delete_user(&self, user_name: &str) -> DbResult<()>;
     async fn change_pwd(&self, user_name: &str, new_pwd: &str) -> DbResult<()>;
@@ -75,7 +77,11 @@ pub trait DbProvider: Send + Sync {
     async fn delete_crate(&self, krate: &NormalizedName, version: &Version) -> DbResult<()>;
     async fn get_crate_meta_list(&self, crate_name: &NormalizedName) -> DbResult<Vec<CrateMeta>>;
     async fn update_last_updated(&self, id: i64, last_updated: &DateTime<Utc>) -> DbResult<()>;
-    async fn search_in_crate_name(&self, contains: &str, cache: bool) -> DbResult<Vec<CrateOverview>>;
+    async fn search_in_crate_name(
+        &self,
+        contains: &str,
+        cache: bool,
+    ) -> DbResult<Vec<CrateOverview>>;
     async fn get_crate_overview_list(
         &self,
         limit: u64,
@@ -170,6 +176,10 @@ pub mod mock {
                 unimplemented!()
             }
 
+            async fn is_crate_user(&self, _crate_name: &NormalizedName, _user: &str) -> DbResult<bool> {
+                unimplemented!()
+            }
+
             async fn is_owner(&self, _crate_name: &NormalizedName, _user: &str) -> DbResult<bool> {
                 unimplemented!()
             }
@@ -179,6 +189,10 @@ pub mod mock {
             }
 
             async fn get_crate_owners(&self, _crate_name: &NormalizedName) -> DbResult<Vec<User>> {
+                unimplemented!()
+            }
+
+            async fn get_crate_users(&self, _crate_name: &NormalizedName) -> DbResult<Vec<User>> {
                 unimplemented!()
             }
 

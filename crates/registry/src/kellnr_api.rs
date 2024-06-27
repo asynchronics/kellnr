@@ -37,6 +37,18 @@ pub async fn check_ownership(
     }
 }
 
+pub async fn check_download_auth(
+    crate_name: &NormalizedName,
+    token: &token::Token,
+    db: &Arc<dyn DbProvider>,
+) -> ApiResult<()> {
+    if token.is_admin || db.is_crate_user(crate_name, &token.user).await? {
+        Ok(())
+    } else {
+        Err(RegistryError::DownloadUnauthorized.into())
+    }
+}
+
 pub async fn me() -> Redirect {
     Redirect::to("/login")
 }
@@ -122,10 +134,12 @@ pub async fn search(
 
 pub async fn download(
     State(state): AppState,
+    token: token::Token,
     Path((package, version)): Path<(OriginalName, Version)>,
-) -> Result<Vec<u8>, StatusCode> {
+) -> ApiResult<Vec<u8>> {
     let db = state.db;
     let cs = state.crate_storage;
+    check_download_auth(&package.to_normalized(), &token, &db).await?;
 
     let file_path = cs.crate_path(&package.to_string(), &version.to_string());
 
@@ -138,7 +152,7 @@ pub async fn download(
 
     match cs.get_file(file_path).await {
         Some(file) => Ok(file),
-        None => Err(StatusCode::NOT_FOUND),
+        None => Err(RegistryError::CrateNotFound.into()),
     }
 }
 
@@ -168,7 +182,8 @@ pub async fn publish(
 
     // Set SHA256 from crate file
     let version = Version::try_from(&pub_data.metadata.vers)?;
-    let cksum = cs.add_bin_package(&orig_name, &version, &pub_data.cratedata)
+    let cksum = cs
+        .add_bin_package(&orig_name, &version, &pub_data.cratedata)
         .await?;
 
     let created = Utc::now();
