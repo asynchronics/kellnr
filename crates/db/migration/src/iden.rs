@@ -66,6 +66,17 @@ pub enum OwnerIden {
 }
 
 #[derive(Iden)]
+pub enum CrateUserIden {
+    #[iden = "crate_user"]
+    Table,
+    Id,
+    #[iden = "crate_fk"]
+    CrateFk,
+    #[iden = "user_fk"]
+    UserFk,
+}
+
+#[derive(Iden)]
 pub enum AuthTokenIden {
     #[iden = "auth_token"]
     Table,
