@@ -1,35 +1,35 @@
 use serde::{Deserialize, Serialize};
 
 #[derive(Default, Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
-pub struct Owner {
+pub struct User {
     pub id: i32,
     pub login: String,
     pub name: Option<String>,
 }
 
 #[derive(Default, Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
-pub struct OwnerList {
-    pub users: Vec<Owner>,
+pub struct UserList {
+    pub users: Vec<User>,
 }
 
-impl From<Vec<Owner>> for OwnerList {
-    fn from(users: Vec<Owner>) -> Self {
+impl From<Vec<User>> for UserList {
+    fn from(users: Vec<User>) -> Self {
         Self { users }
     }
 }
 
 #[derive(Default, Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
-pub struct OwnerRequest {
+pub struct UserRequest {
     pub users: Vec<String>,
 }
 
 #[derive(Default, Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
-pub struct OwnerResponse {
+pub struct UserResponse {
     pub ok: bool,
     pub msg: String,
 }
 
-impl From<&str> for OwnerResponse {
+impl From<&str> for UserResponse {
     fn from(msg: &str) -> Self {
         Self {
             ok: true,

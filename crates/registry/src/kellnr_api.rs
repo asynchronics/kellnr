@@ -1,8 +1,8 @@
-use crate::owner;
 use crate::pub_data::PubData;
 use crate::pub_success::PubDataSuccess;
 use crate::registry_error::RegistryError;
 use crate::search_params::SearchParams;
+use crate::user;
 use crate::yank_success::YankSuccess;
 use anyhow::Result;
 use appstate::AppState;
@@ -68,8 +68,8 @@ pub async fn remove_owner(
     token: token::Token,
     State(db): DbState,
     Path(crate_name): Path<OriginalName>,
-    Json(input): Json<owner::OwnerRequest>,
-) -> ApiResult<Json<owner::OwnerResponse>> {
+    Json(input): Json<user::UserRequest>,
+) -> ApiResult<Json<user::UserResponse>> {
     let crate_name = crate_name.to_normalized();
     check_ownership(&crate_name, &token, &db).await?;
 
@@ -77,17 +77,15 @@ pub async fn remove_owner(
         db.delete_owner(&crate_name, user).await?;
     }
 
-    Ok(Json(owner::OwnerResponse::from(
-        "Removed owners from crate.",
-    )))
+    Ok(Json(user::UserResponse::from("Removed owners from crate.")))
 }
 
 pub async fn remove_crate_user(
     token: token::Token,
     State(db): DbState,
     Path(crate_name): Path<OriginalName>,
-    Json(input): Json<owner::OwnerRequest>,
-) -> ApiResult<Json<owner::OwnerResponse>> {
+    Json(input): Json<user::UserRequest>,
+) -> ApiResult<Json<user::UserResponse>> {
     let crate_name = crate_name.to_normalized();
     check_ownership(&crate_name, &token, &db).await?;
 
@@ -95,81 +93,79 @@ pub async fn remove_crate_user(
         db.delete_crate_user(&crate_name, user).await?;
     }
 
-    Ok(Json(owner::OwnerResponse::from(
-        "Removed users from crate.",
-    )))
+    Ok(Json(user::UserResponse::from("Removed users from crate.")))
 }
 
 pub async fn add_owner(
     token: token::Token,
     State(db): DbState,
     Path(crate_name): Path<OriginalName>,
-    Json(input): Json<owner::OwnerRequest>,
-) -> ApiResult<Json<owner::OwnerResponse>> {
+    Json(input): Json<user::UserRequest>,
+) -> ApiResult<Json<user::UserResponse>> {
     let crate_name = crate_name.to_normalized();
     check_ownership(&crate_name, &token, &db).await?;
     for user in input.users.iter() {
         db.add_owner(&crate_name, user).await?;
     }
 
-    Ok(Json(owner::OwnerResponse::from("Added owners to crate.")))
+    Ok(Json(user::UserResponse::from("Added owners to crate.")))
 }
 
 pub async fn list_owners(
     Path(crate_name): Path<OriginalName>,
     State(db): DbState,
-) -> ApiResult<Json<owner::OwnerList>> {
+) -> ApiResult<Json<user::UserList>> {
     let crate_name = crate_name.to_normalized();
 
-    let owners: Vec<owner::Owner> = db
+    let owners: Vec<user::User> = db
         .get_crate_owners(&crate_name)
         .await?
         .iter()
-        .map(|u| owner::Owner {
+        .map(|u| user::User {
             id: u.id,
             login: u.name.to_owned(),
             name: None,
         })
         .collect();
 
-    Ok(Json(owner::OwnerList::from(owners)))
+    Ok(Json(user::UserList::from(owners)))
 }
 
 pub async fn add_crate_user(
     token: token::Token,
     State(db): DbState,
     Path(crate_name): Path<OriginalName>,
-    Json(input): Json<owner::OwnerRequest>,
-) -> ApiResult<Json<owner::OwnerResponse>> {
+    Json(input): Json<user::UserRequest>,
+) -> ApiResult<Json<user::UserResponse>> {
     let crate_name = crate_name.to_normalized();
     check_ownership(&crate_name, &token, &db).await?;
     for user in input.users.iter() {
         db.add_crate_user(&crate_name, user).await?;
     }
 
-    Ok(Json(owner::OwnerResponse::from("Added users to crate.")))
+    Ok(Json(user::UserResponse::from("Added users to crate.")))
 }
 
 pub async fn list_crate_users(
     token: token::Token,
     Path(crate_name): Path<OriginalName>,
     State(db): DbState,
-) -> ApiResult<Json<owner::OwnerList>> {
+) -> ApiResult<Json<user::UserList>> {
     let crate_name = crate_name.to_normalized();
     check_ownership(&crate_name, &token, &db).await?;
 
-    let users: Vec<owner::Owner> = db
+    let users: Vec<user::User> = db
         .get_crate_users(&crate_name)
         .await?
         .iter()
-        .map(|u| owner::Owner {
+        .map(|u| user::User {
             id: u.id,
             login: u.name.to_owned(),
             name: None,
         })
         .collect();
 
-    Ok(Json(owner::OwnerList::from(users)))
+    Ok(Json(user::UserList::from(users)))
 }
 
 pub async fn search(
@@ -331,7 +327,7 @@ mod reg_api_tests {
         let valid_pub_package = read("../test_data/pub_data.bin")
             .await
             .expect("Cannot open valid package file.");
-        let del_owner = owner::OwnerRequest {
+        let del_owner = user::UserRequest {
             users: vec![String::from("admin")],
         };
         let _ = kellnr
@@ -371,7 +367,7 @@ mod reg_api_tests {
                 .unwrap()
                 .len()
         );
-        let owners = serde_json::from_slice::<owner::OwnerResponse>(&result_msg).unwrap();
+        let owners = serde_json::from_slice::<user::UserResponse>(&result_msg).unwrap();
         assert!(owners.ok);
     }
 
@@ -400,7 +396,7 @@ mod reg_api_tests {
             .add_user("user", "123", "123", false)
             .await
             .unwrap();
-        let add_owner = owner::OwnerRequest {
+        let add_owner = user::UserRequest {
             users: vec![String::from("user")],
         };
 
@@ -418,7 +414,7 @@ mod reg_api_tests {
             .unwrap();
 
         let result_msg = r.into_body().collect().await.unwrap().to_bytes();
-        let owners = serde_json::from_slice::<owner::OwnerResponse>(&result_msg).unwrap();
+        let owners = serde_json::from_slice::<user::UserResponse>(&result_msg).unwrap();
         assert!(owners.ok);
     }
 
@@ -458,7 +454,7 @@ mod reg_api_tests {
 
         let result_msg = r.into_body().collect().await.unwrap().to_bytes();
 
-        let owners = serde_json::from_slice::<owner::OwnerList>(&result_msg).unwrap();
+        let owners = serde_json::from_slice::<user::UserList>(&result_msg).unwrap();
         assert_eq!(1, owners.users.len());
         assert_eq!("admin", owners.users[0].login);
     }
