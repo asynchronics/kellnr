@@ -793,6 +793,31 @@ impl DbProvider for Database {
         Ok(())
     }
 
+    async fn add_crate_user(&self, crate_name: &NormalizedName, user: &str) -> DbResult<()> {
+        let user_fk = user::Entity::find()
+            .filter(user::Column::Name.eq(user))
+            .one(&self.db_con)
+            .await?
+            .map(|model| model.id)
+            .ok_or_else(|| DbError::UserNotFound(user.to_string()))?;
+
+        let crate_fk: i64 = krate::Entity::find()
+            .filter(krate::Column::Name.eq(crate_name.to_string()))
+            .one(&self.db_con)
+            .await?
+            .map(|model| model.id)
+            .ok_or_else(|| DbError::CrateNotFound(crate_name.to_string()))?;
+
+        let o = crate_user::ActiveModel {
+            user_fk: Set(user_fk),
+            crate_fk: Set(crate_fk),
+            ..Default::default()
+        };
+
+        CrateUser::insert(o).exec(&self.db_con).await?;
+        Ok(())
+    }
+
     async fn add_owner(&self, crate_name: &NormalizedName, owner: &str) -> DbResult<()> {
         let user_fk = user::Entity::find()
             .filter(user::Column::Name.eq(owner))
@@ -818,20 +843,20 @@ impl DbProvider for Database {
         Ok(())
     }
 
-    async fn is_crate_user(&self, crate_name: &NormalizedName, user: &str) -> DbResult<bool> {
+    async fn is_download_restricted(&self, crate_name: &NormalizedName) -> DbResult<bool> {
         let restricted_download = krate::Entity::find()
             .filter(krate::Column::Name.eq(crate_name.to_string()))
             .one(&self.db_con)
             .await?
             .map(|model| model.restricted_download);
 
-        if match restricted_download {
-            Some(restricted) => !restricted,
-            None => true,
-        } {
-            return Ok(true);
+        match restricted_download {
+            Some(restricted) => Ok(restricted),
+            None => Ok(false),
         }
+    }
 
+    async fn is_crate_user(&self, crate_name: &NormalizedName, user: &str) -> DbResult<bool> {
         let user = crate_user::Entity::find()
             .join(JoinType::InnerJoin, crate_user::Relation::Krate.def())
             .join(JoinType::InnerJoin, crate_user::Relation::User.def())
@@ -892,7 +917,7 @@ impl DbProvider for Database {
 
     async fn get_crate_users(&self, crate_name: &NormalizedName) -> DbResult<Vec<User>> {
         let u = user::Entity::find()
-            .join(JoinType::InnerJoin, user::Relation::Owner.def())
+            .join(JoinType::InnerJoin, user::Relation::CrateUser.def())
             .join(JoinType::InnerJoin, crate_user::Relation::Krate.def())
             .filter(Expr::col((CrateIden::Table, krate::Column::Name)).eq(crate_name.to_string()))
             .all(&self.db_con)
@@ -1086,6 +1111,24 @@ impl DbProvider for Database {
             .ok_or_else(|| DbError::OwnerNotFound(owner.to_string()))?;
 
         owner.delete(&self.db_con).await?;
+
+        Ok(())
+    }
+
+    async fn delete_crate_user(&self, crate_name: &str, user: &str) -> DbResult<()> {
+        let user = crate_user::Entity::find()
+            .join(JoinType::InnerJoin, crate_user::Relation::Krate.def())
+            .join(JoinType::InnerJoin, crate_user::Relation::User.def())
+            .filter(
+                Cond::all()
+                    .add(krate::Column::Name.eq(crate_name))
+                    .add(user::Column::Name.eq(user)),
+            )
+            .one(&self.db_con)
+            .await?
+            .ok_or_else(|| DbError::UserNotFound(user.to_string()))?;
+
+        user.delete(&self.db_con).await?;
 
         Ok(())
     }

@@ -10,7 +10,6 @@ use appstate::DbState;
 use auth::token;
 use axum::extract::Path;
 use axum::extract::State;
-use axum::http::StatusCode;
 use axum::response::Redirect;
 use axum::Json;
 use chrono::Utc;
@@ -39,13 +38,25 @@ pub async fn check_ownership(
 
 pub async fn check_download_auth(
     crate_name: &NormalizedName,
-    token: &token::Token,
+    token: &token::OptionToken,
     db: &Arc<dyn DbProvider>,
 ) -> ApiResult<()> {
-    if token.is_admin || db.is_crate_user(crate_name, &token.user).await? {
+    if !db.is_download_restricted(crate_name).await? {
+        return Ok(());
+    }
+
+    let token = match token {
+        token::OptionToken::Some(token) => token,
+        token::OptionToken::None => return Err(RegistryError::DownloadUnauthorized.into()),
+    };
+
+    if token.is_admin
+        || db.is_crate_user(crate_name, &token.user).await?
+        || db.is_owner(crate_name, &token.user).await?
+    {
         Ok(())
     } else {
-        Err(RegistryError::DownloadUnauthorized.into())
+        Err(RegistryError::NotCrateUser.into())
     }
 }
 
@@ -68,6 +79,24 @@ pub async fn remove_owner(
 
     Ok(Json(owner::OwnerResponse::from(
         "Removed owners from crate.",
+    )))
+}
+
+pub async fn remove_crate_user(
+    token: token::Token,
+    State(db): DbState,
+    Path(crate_name): Path<OriginalName>,
+    Json(input): Json<owner::OwnerRequest>,
+) -> ApiResult<Json<owner::OwnerResponse>> {
+    let crate_name = crate_name.to_normalized();
+    check_ownership(&crate_name, &token, &db).await?;
+
+    for user in input.users.iter() {
+        db.delete_crate_user(&crate_name, user).await?;
+    }
+
+    Ok(Json(owner::OwnerResponse::from(
+        "Removed users from crate.",
     )))
 }
 
@@ -106,6 +135,43 @@ pub async fn list_owners(
     Ok(Json(owner::OwnerList::from(owners)))
 }
 
+pub async fn add_crate_user(
+    token: token::Token,
+    State(db): DbState,
+    Path(crate_name): Path<OriginalName>,
+    Json(input): Json<owner::OwnerRequest>,
+) -> ApiResult<Json<owner::OwnerResponse>> {
+    let crate_name = crate_name.to_normalized();
+    check_ownership(&crate_name, &token, &db).await?;
+    for user in input.users.iter() {
+        db.add_crate_user(&crate_name, user).await?;
+    }
+
+    Ok(Json(owner::OwnerResponse::from("Added users to crate.")))
+}
+
+pub async fn list_crate_users(
+    token: token::Token,
+    Path(crate_name): Path<OriginalName>,
+    State(db): DbState,
+) -> ApiResult<Json<owner::OwnerList>> {
+    let crate_name = crate_name.to_normalized();
+    check_ownership(&crate_name, &token, &db).await?;
+
+    let users: Vec<owner::Owner> = db
+        .get_crate_users(&crate_name)
+        .await?
+        .iter()
+        .map(|u| owner::Owner {
+            id: u.id,
+            login: u.name.to_owned(),
+            name: None,
+        })
+        .collect();
+
+    Ok(Json(owner::OwnerList::from(users)))
+}
+
 pub async fn search(
     State(db): DbState,
     params: SearchParams,
@@ -134,7 +200,7 @@ pub async fn search(
 
 pub async fn download(
     State(state): AppState,
-    token: token::Token,
+    token: token::OptionToken,
     Path((package, version)): Path<(OriginalName, Version)>,
 ) -> ApiResult<Vec<u8>> {
     let db = state.db;
@@ -237,6 +303,7 @@ mod reg_api_tests {
     use appstate::AppStateData;
     use axum::body::Body;
     use axum::http::Request;
+    use axum::http::StatusCode;
     use axum::routing::{delete, get, put};
     use axum::Router;
     use db::mock::MockDb;

@@ -121,6 +121,15 @@ async fn main() {
         .route("/:crate_name/owners", delete(kellnr_api::remove_owner))
         .route("/:crate_name/owners", put(kellnr_api::add_owner))
         .route("/:crate_name/owners", get(kellnr_api::list_owners))
+        .route(
+            "/:crate_name/crate_users",
+            delete(kellnr_api::remove_crate_user),
+        )
+        .route("/:crate_name/crate_users", put(kellnr_api::add_crate_user))
+        .route(
+            "/:crate_name/crate_users",
+            get(kellnr_api::list_crate_users),
+        )
         .route("/", get(kellnr_api::search))
         .route("/:package/:version/download", get(kellnr_api::download))
         .route(
