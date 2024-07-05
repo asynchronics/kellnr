@@ -856,6 +856,23 @@ impl DbProvider for Database {
         }
     }
 
+    async fn change_download_restricted(
+        &self,
+        crate_name: &NormalizedName,
+        restricted: bool,
+    ) -> DbResult<()> {
+        let mut krate: krate::ActiveModel = krate::Entity::find()
+            .filter(krate::Column::Name.eq(crate_name.to_string()))
+            .one(&self.db_con)
+            .await?
+            .ok_or_else(|| DbError::CrateNotFound(crate_name.to_string()))?
+            .into();
+
+        krate.restricted_download = Set(restricted);
+        krate.update(&self.db_con).await?;
+        Ok(())
+    }
+
     async fn is_crate_user(&self, crate_name: &NormalizedName, user: &str) -> DbResult<bool> {
         let user = crate_user::Entity::find()
             .join(JoinType::InnerJoin, crate_user::Relation::Krate.def())

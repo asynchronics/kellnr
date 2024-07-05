@@ -40,6 +40,11 @@ pub trait DbProvider: Send + Sync {
     async fn add_crate_user(&self, crate_name: &NormalizedName, user: &str) -> DbResult<()>;
     async fn add_owner(&self, crate_name: &NormalizedName, owner: &str) -> DbResult<()>;
     async fn is_download_restricted(&self, crate_name: &NormalizedName) -> DbResult<bool>;
+    async fn change_download_restricted(
+        &self,
+        crate_name: &NormalizedName,
+        restricted: bool,
+    ) -> DbResult<()>;
     async fn is_crate_user(&self, crate_name: &NormalizedName, user: &str) -> DbResult<bool>;
     async fn is_owner(&self, crate_name: &NormalizedName, user: &str) -> DbResult<bool>;
     async fn get_crate_id(&self, crate_name: &NormalizedName) -> DbResult<Option<i64>>;
@@ -184,6 +189,14 @@ pub mod mock {
             }
 
             async fn is_download_restricted(&self, crate_name: &NormalizedName) -> DbResult<bool> {
+                unimplemented!()
+            }
+
+            async fn change_download_restricted(
+                &self,
+                crate_name: &NormalizedName,
+                restricted: bool,
+            ) -> DbResult<()> {
                 unimplemented!()
             }
 

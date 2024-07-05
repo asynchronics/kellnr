@@ -1,35 +1,35 @@
 use serde::{Deserialize, Serialize};
 
 #[derive(Default, Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
-pub struct User {
+pub struct CrateUser {
     pub id: i32,
     pub login: String,
     pub name: Option<String>,
 }
 
 #[derive(Default, Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
-pub struct UserList {
-    pub users: Vec<User>,
+pub struct CrateUserList {
+    pub users: Vec<CrateUser>,
 }
 
-impl From<Vec<User>> for UserList {
-    fn from(users: Vec<User>) -> Self {
+impl From<Vec<CrateUser>> for CrateUserList {
+    fn from(users: Vec<CrateUser>) -> Self {
         Self { users }
     }
 }
 
 #[derive(Default, Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
-pub struct UserRequest {
+pub struct CrateUserRequest {
     pub users: Vec<String>,
 }
 
 #[derive(Default, Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
-pub struct UserResponse {
+pub struct CrateUserResponse {
     pub ok: bool,
     pub msg: String,
 }
 
-impl From<&str> for UserResponse {
+impl From<&str> for CrateUserResponse {
     fn from(msg: &str) -> Self {
         Self {
             ok: true,
