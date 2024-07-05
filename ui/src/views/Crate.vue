@@ -7,7 +7,6 @@
   <p v-if="crate.description != null">
     {{ crate.description }}
   </p>
-  
   <div class="tabSwitch paragraph">
     <div v-if="selected_version.readme" class="tab clickable" :class="tab === 'readme' ? 'activeTab' : ''"
          @click="changeTab('readme')">
@@ -32,34 +31,29 @@
       Admin
     </div>
   </div>
-  
   <div id="infoGrid">
     <div id="tabs" class="">
       <div v-if="tab === 'readme'">
         <Readme :readme="selected_version.readme"></Readme>
       </div>
-      
       <div v-if="tab === 'versions'">
         <div class="">
           <Version v-for="version in crate.versions" :key="version.version" :name="crate.name"
 		   :version="version.version" :last_updated="version.created" :downloads="version.downloads.toString()" />
         </div>
       </div>
-      
       <div v-if="tab === 'deps'">
         <div class="" v-if="sortedDeps.length > 0">
           <Dependency v-for="dep in sortedDeps" :key="dep.name" :name="dep.name" :version="dep.version_req"
 		      :registry="dep.registry">
           </Dependency>
         </div>
-	
         <div class="" v-if="sortedDevDeps.length > 0">
           <h2 class="k-h3">Development Dependencies</h2>
           <Dependency v-for="dep in sortedDevDeps" :key="dep.name" :name="dep.name" :version="dep.version_req"
 		      :registry="dep.registry">
           </Dependency>
         </div>
-	
         <div class="" v-if="sortedDevDeps.length > 0">
           <h2 class="k-h3">Build Dependencies</h2>
           <Dependency v-for="dep in sortedBuildDeps" :key="dep.name" :name="dep.name" :version="dep.version_req"
@@ -67,7 +61,6 @@
           </Dependency>
         </div>
       </div>
-      
       <div v-if="tab === 'meta'" class="metaTab">
         <div class="glass">
           <div class="iconElements">
@@ -124,11 +117,9 @@
 	      </span>
 	    </div>
 	  </template>
-
 	  <status-notification :status="deleteUserStatus" @update:clear="deleteUserStatus = $event">
 	    {{ deleteUserMsg }}
 	  </status-notification>
-
 	  <h3 class="k-h3">Add crate user</h3>
 	  <form>
 	    <div class="field">
@@ -144,86 +135,78 @@
 		</span>
 	      </div>
 	    </div>
-
 	    <status-notification :status="addCrateUserStatus" @update:clear="addCrateUserStatus = $event">
 	      {{ addCrateUserMsg }}
 	    </status-notification>
-
 	    <div class="control">
 	      <button class="button is-info" @click.prevent="addCrateUser">Add</button>
 	    </div>
 	  </form>
-
         </div>
       </div>
-
       <div v-if="tab === 'administrate'" class="administrateTab">
         <div class="glass">
           <h2 class="k-h2">Delete Crate Version</h2>
           <div class="notification is-light is-danger">
             <strong>Warning:</strong> Deleting a crate version breaks all crates that depend on it!
-            </div>
-            <div class="paragraph">
-              Instead of deleting the crate, think about <a
-                href="https://doc.rust-lang.org/cargo/commands/cargo-yank.html" class="link">yanking</a> it instead, which
-              does not break crates that depend on it.
-            </div>
-            <br />
-            <div>
-              <span class="control">
-                <button class="button is-danger" @click="deleteVersion(crate.name, selected_version.version)">Delete
-                  Version</button>
-              </span>
-              <span id="deleteCrate" class="control">
-                <button class="button is-danger" @click="deleteCrate(crate.name)">Delete Crate</button>
-              </span>
-            </div>
+          </div>
+          <div class="paragraph">
+            Instead of deleting the crate, think about <a
+							 href="https://doc.rust-lang.org/cargo/commands/cargo-yank.html" class="link">yanking</a> it instead, which
+            does not break crates that depend on it.
+          </div>
+          <br />
+          <div>
+            <span class="control">
+              <button class="button is-danger" @click="deleteVersion(crate.name, selected_version.version)">Delete
+                Version</button>
+            </span>
+            <span id="deleteCrate" class="control">
+              <button class="button is-danger" @click="deleteCrate(crate.name)">Delete Crate</button>
+            </span>
           </div>
         </div>
       </div>
-
-      <div id="infos" class="glass">
-        <crate-sidebar-element icon="fa-code" header="Install" class="bottomBorder">
-          <div class="clickable tooltip" @click="copyTomlToClipboard()">
-            {{ crate.name }} = "{{ selected_version.version }}"
-            <span class="tooltiptext">Copy to clipboard</span>
+    </div>
+    <div id="infos" class="glass">
+      <crate-sidebar-element icon="fa-code" header="Install" class="bottomBorder">
+        <div class="clickable tooltip" @click="copyTomlToClipboard()">
+          {{ crate.name }} = "{{ selected_version.version }}"
+          <span class="tooltiptext">Copy to clipboard</span>
+        </div>
+      </crate-sidebar-element>
+      <crate-sidebar-element icon="fa-calendar-alt" header="Uploaded" class="bottomBorder">
+        <div class="tooltip">
+          {{ humanizedLastUpdated }}
+          <span class="tooltiptext">{{ crate.last_updated }}</span>
+        </div>
+      </crate-sidebar-element>
+      <crate-sidebar-element icon="fa-book" header="Documentation" class="bottomBorder">
+        <div class="docs" @click="openDocsPage()">
+          <div v-if="docLink">
+            <div class="clickable">{{ crate.name }} ({{ selected_version.version }})</div>
           </div>
-        </crate-sidebar-element>
-
-        <crate-sidebar-element icon="fa-calendar-alt" header="Uploaded" class="bottomBorder">
-          <div class="tooltip">
-            {{ humanizedLastUpdated }}
-            <span class="tooltiptext">{{ crate.last_updated }}</span>
+          <div v-else>
+            <router-link class="clickable" to="/publishdocs">Add</router-link>
           </div>
-        </crate-sidebar-element>
-        
-        <crate-sidebar-element icon="fa-book" header="Documentation" class="bottomBorder">
-          <div class="docs" @click="openDocsPage()">
-            <div v-if="docLink">
-              <div class="clickable">{{ crate.name }} ({{ selected_version.version }})</div>
-            </div>
-            <div v-else>
-              <router-link class="clickable" to="/publishdocs">Add</router-link>
-            </div>
-          </div>
-          <div class="buildDocs clickable" v-if="showBuildRustdoc()"
-            @click="buildDoc(crate.name, selected_version.version)">
-            <span v-if="docLink">
-              re-build
-            </span>
-            <span v-else>
-              build
-            </span>
-          </div>
-        </crate-sidebar-element>
-        
-        <crate-sidebar-element header="Downloads" icon="fa-cloud-download-alt">
-          <div>Version: {{ selected_version.downloads }}</div>
-          <div>Total: {{ crate.total_downloads }}</div>
-        </crate-sidebar-element>
-      </div>
+        </div>
+        <div class="buildDocs clickable" v-if="showBuildRustdoc()"
+             @click="buildDoc(crate.name, selected_version.version)">
+          <span v-if="docLink">
+            re-build
+          </span>
+          <span v-else>
+            build
+          </span>
+        </div>
+      </crate-sidebar-element>
+      <crate-sidebar-element header="Downloads" icon="fa-cloud-download-alt">
+        <div>Version: {{ selected_version.downloads }}</div>
+        <div>Total: {{ crate.total_downloads }}</div>
+      </crate-sidebar-element>
     </div>
   </div>
+</div>
 </template>
 
 <script setup lang="ts">

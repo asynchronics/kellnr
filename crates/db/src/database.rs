@@ -808,13 +808,13 @@ impl DbProvider for Database {
             .map(|model| model.id)
             .ok_or_else(|| DbError::CrateNotFound(crate_name.to_string()))?;
 
-        let o = crate_user::ActiveModel {
+        let u = crate_user::ActiveModel {
             user_fk: Set(user_fk),
             crate_fk: Set(crate_fk),
             ..Default::default()
         };
 
-        CrateUser::insert(o).exec(&self.db_con).await?;
+        CrateUser::insert(u).exec(&self.db_con).await?;
         Ok(())
     }
 
