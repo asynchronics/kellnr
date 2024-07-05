@@ -14,7 +14,7 @@
 ####################################################################################
 [setup]
 admin_pwd = "admin"
-admin_token = "ADM"
+admin_token = "Zy9HhJ02RJmg0GCrgLfaCVfU6IwDfhXD"
 
 ####################################################################################
 #                                                                                  #
@@ -33,7 +33,7 @@ cache_size = 1000
 max_crate_size = 10
 # Enable required authentication for crate pulls.
 # If set to "false", anyone can download crates from Kellnr. Upload always requires authentication.
-auth_required = true
+auth_required = false
 
 [docs]
 # Enable or disable automatic rustdoc generation for uploaded crates
@@ -51,11 +51,11 @@ num_threads = 20
 
 [log]
 # Set the log level to "trace", "debug", "info", "warn", or "error".
-level = "trace"
+level = "info"
 # Set the log format to "compact", "pretty" or "json".
-format = "pretty"
+format = "compact"
 # Set the log level for the underlaying web framework to "trace", "debug", "info", "warn", or "error".
-level_web_server = "trace"
+level_web_server = "warn"
 
 [local]
 # Address where the API and web server is started. Usually no change is needed.
@@ -69,18 +69,18 @@ port = 8000
 # to know, where it is reachable from the outside, e.g. behind a reverse proxy.
 [origin]
 # The hostname where Kellnr is reachable from the outside
-hostname = "localhost"
+hostname = "127.0.0.1"
 # If a proxy is used in front of Kellnr, the port of the proxy can be specified here
 # If no proxy is used, it is the same as the "api_port"
-port = 443
+port = 8000
 # Either "https" or "http". Use in combination with a reverse proxy that provides HTTPS.
-protocol = "https"
+protocol = "http"
 
 # Configure Postgresql as the database backend instead of Sqlite
 [postgresql]
 enabled = false
 address = "localhost"
 port = 5432
-db = "kellnr_db"
-user = "admin"
-pwd = "admin"
+db = "kellnr"
+user = ""
+pwd = ""
