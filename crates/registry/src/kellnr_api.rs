@@ -332,7 +332,7 @@ pub async fn publish(
     let orig_name = OriginalName::try_from(&pub_data.metadata.name)?;
     let normalized_name = orig_name.to_normalized();
 
-    // Check if user is read-only and can't publush (upload) crates.
+    // Check if user is read-only and can't publish (upload) crates.
     // Admin users bypass this check as they can modify
     // their read-only status.
     check_can_modify(&token).await?;
@@ -341,13 +341,23 @@ pub async fn publish(
     // If not, he is not allowed push a new version.
     // Check if crate with same version already exists.
     let id = db.get_crate_id(&normalized_name).await?;
-    if let Some(id) = id {
-        check_ownership(&normalized_name, &token, &db).await?;
-        if db.crate_version_exists(id, &pub_data.metadata.vers).await? {
-            return Err(
-                RegistryError::CrateExists(pub_data.metadata.name, pub_data.metadata.vers).into(),
-            );
+    match (id, settings.registry.new_crates_restricted) {
+        (Some(id), _) => {
+            check_ownership(&normalized_name, &token, &db).await?;
+            if db.crate_version_exists(id, &pub_data.metadata.vers).await? {
+                return Err(RegistryError::CrateExists(
+                    pub_data.metadata.name,
+                    pub_data.metadata.vers,
+                )
+                .into());
+            }
         }
+        (None, true) => {
+            if !token.is_admin {
+                return Err(RegistryError::NewCratesRestricted.into());
+            }
+        }
+        _ => (),
     }
 
     // Check if required crate fields aren't present in crate
