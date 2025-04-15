@@ -74,15 +74,15 @@ async fn get_total_crate_versions_returns_number_of_crate_versions() {
     )
     .await
     .unwrap();
-    test_db
-        .test_add_crate(
-            "crate2",
-            "admin",
-            &Version::try_from("1.0.0").unwrap(),
-            &created,
-        )
-        .await
-        .unwrap();
+    test_add_crate(
+        &test_db,
+        "crate2",
+        "admin",
+        &Version::try_from("1.0.0").unwrap(),
+        &created,
+    )
+    .await
+    .unwrap();
 
     let total_versions = test_db.get_total_crate_versions().await.unwrap();
 
@@ -93,36 +93,54 @@ async fn get_total_crate_versions_returns_number_of_crate_versions() {
 #[tokio::test]
 async fn get_total_downloads_returns_number_of_total_downloads() {
     let created = Utc.with_ymd_and_hms(2020, 10, 7, 13, 18, 00).unwrap();
-    let id1 = test_db
-        .test_add_crate(
-            "crate1",
-            "admin",
-            &Version::try_from("1.0.0").unwrap(),
-            &created,
-        )
-        .await
-        .unwrap();
-    let id2 = test_db
-        .test_add_crate(
-            "crate2",
-            "admin",
-            &Version::try_from("1.0.0").unwrap(),
-            &created,
-        )
-        .await
-        .unwrap();
-    test_db
-        .test_add_crate_meta(id1, &Version::try_from("1.0.0").unwrap(), &created, None)
-        .await
-        .unwrap();
-    test_db
-        .test_add_crate_meta(id1, &Version::try_from("2.0.0").unwrap(), &created, None)
-        .await
-        .unwrap();
-    test_db
-        .test_add_crate_meta(id2, &Version::try_from("1.0.0").unwrap(), &created, None)
-        .await
-        .unwrap();
+    let id1 = test_add_crate(
+        &test_db,
+        "crate1",
+        "admin",
+        &Version::try_from("1.0.0").unwrap(),
+        &created,
+    )
+    .await
+    .unwrap();
+    let id2 = test_add_crate(
+        &test_db,
+        "crate2",
+        "admin",
+        &Version::try_from("1.0.0").unwrap(),
+        &created,
+    )
+    .await
+    .unwrap();
+    test_add_crate_meta(
+        &test_db,
+        id1,
+        &Version::try_from("1.0.0").unwrap(),
+        &created,
+        None,
+    )
+    .await
+    .unwrap();
+
+    test_add_crate_meta(
+        &test_db,
+        id1,
+        &Version::try_from("2.0.0").unwrap(),
+        &created,
+        None,
+    )
+    .await
+    .unwrap();
+
+    test_add_crate_meta(
+        &test_db,
+        id2,
+        &Version::try_from("1.0.0").unwrap(),
+        &created,
+        None,
+    )
+    .await
+    .unwrap();
+
     test_db
         .increase_download_counter(
             &NormalizedName::from_unchecked_str("crate1"),
@@ -161,24 +179,26 @@ async fn get_total_downloads_returns_number_of_total_downloads() {
 #[tokio::test]
 async fn get_top_crates_downloads_returns_top_crates_with_downloads() {
     let created1 = Utc.with_ymd_and_hms(2020, 10, 7, 13, 18, 00).unwrap();
-    let crate_id = test_db
-        .test_add_crate(
-            "mycrate",
-            "admin",
-            &Version::try_from("1.0.0").unwrap(),
-            &created1,
-        )
-        .await
-        .unwrap();
-    test_db
-        .test_add_crate_meta(
-            crate_id,
-            &Version::try_from("0.1.0").unwrap(),
-            &created1,
-            None,
-        )
-        .await
-        .unwrap();
+    let crate_id = test_add_crate(
+        &test_db,
+        "mycrate",
+        "admin",
+        &Version::try_from("1.0.0").unwrap(),
+        &created1,
+    )
+    .await
+    .unwrap();
+
+    test_add_crate_meta(
+        &test_db,
+        crate_id,
+        &Version::try_from("0.1.0").unwrap(),
+        &created1,
+        None,
+    )
+    .await
+    .unwrap();
+
     test_db
         .increase_download_counter(
             &NormalizedName::from_unchecked_str("mycrate"),
@@ -199,105 +219,105 @@ async fn get_top_crates_downloads_returns_top_crates_with_downloads() {
 #[tokio::test]
 async fn increase_download_counter_works() {
     let created = Utc.with_ymd_and_hms(2020, 10, 7, 13, 18, 00).unwrap();
-    test_db
-        .test_add_crate(
-            "crate1",
-            "admin",
-            &Version::try_from("1.0.0").unwrap(),
-            &created,
-        )
-        .await
-        .unwrap();
-    test_db
-        .test_add_crate(
-            "crate2",
-            "admin",
-            &Version::try_from("1.0.0").unwrap(),
-            &created,
-        )
-        .await
-        .unwrap();
-    test_db
-        .test_add_crate(
-            "crate3",
-            "admin",
-            &Version::try_from("1.0.0").unwrap(),
-            &created,
-        )
-        .await
-        .unwrap();
-    test_db
-        .test_add_crate(
-            "crate4",
-            "admin",
-            &Version::try_from("1.0.0").unwrap(),
-            &created,
-        )
-        .await
-        .unwrap();
-    test_db
-        .test_add_crate(
-            "crate5",
-            "admin",
-            &Version::try_from("1.0.0").unwrap(),
-            &created,
-        )
-        .await
-        .unwrap();
-    test_db
-        .test_add_crate(
-            "crate1",
-            "admin",
-            &Version::try_from("1.0.0").unwrap(),
-            &created,
-        )
-        .await
-        .unwrap();
-    test_db
-        .test_add_crate(
-            "crate1",
-            "admin",
-            &Version::try_from("2.0.0").unwrap(),
-            &created,
-        )
-        .await
-        .unwrap();
-    test_db
-        .test_add_crate(
-            "crate2",
-            "admin",
-            &Version::try_from("1.0.0").unwrap(),
-            &created,
-        )
-        .await
-        .unwrap();
-    test_db
-        .test_add_crate(
-            "crate3",
-            "admin",
-            &Version::try_from("1.0.0").unwrap(),
-            &created,
-        )
-        .await
-        .unwrap();
-    test_db
-        .test_add_crate(
-            "crate4",
-            "admin",
-            &Version::try_from("1.0.0").unwrap(),
-            &created,
-        )
-        .await
-        .unwrap();
-    test_db
-        .test_add_crate(
-            "crate5",
-            "admin",
-            &Version::try_from("1.0.0").unwrap(),
-            &created,
-        )
-        .await
-        .unwrap();
+    test_add_crate(
+        &test_db,
+        "crate1",
+        "admin",
+        &Version::try_from("1.0.0").unwrap(),
+        &created,
+    )
+    .await
+    .unwrap();
+    test_add_crate(
+        &test_db,
+        "crate2",
+        "admin",
+        &Version::try_from("1.0.0").unwrap(),
+        &created,
+    )
+    .await
+    .unwrap();
+    test_add_crate(
+        &test_db,
+        "crate3",
+        "admin",
+        &Version::try_from("1.0.0").unwrap(),
+        &created,
+    )
+    .await
+    .unwrap();
+    test_add_crate(
+        &test_db,
+        "crate4",
+        "admin",
+        &Version::try_from("1.0.0").unwrap(),
+        &created,
+    )
+    .await
+    .unwrap();
+    test_add_crate(
+        &test_db,
+        "crate5",
+        "admin",
+        &Version::try_from("1.0.0").unwrap(),
+        &created,
+    )
+    .await
+    .unwrap();
+    test_add_crate(
+        &test_db,
+        "crate1",
+        "admin",
+        &Version::try_from("1.0.0").unwrap(),
+        &created,
+    )
+    .await
+    .unwrap();
+    test_add_crate(
+        &test_db,
+        "crate1",
+        "admin",
+        &Version::try_from("2.0.0").unwrap(),
+        &created,
+    )
+    .await
+    .unwrap();
+    test_add_crate(
+        &test_db,
+        "crate2",
+        "admin",
+        &Version::try_from("1.0.0").unwrap(),
+        &created,
+    )
+    .await
+    .unwrap();
+    test_add_crate(
+        &test_db,
+        "crate3",
+        "admin",
+        &Version::try_from("1.0.0").unwrap(),
+        &created,
+    )
+    .await
+    .unwrap();
+    test_add_crate(
+        &test_db,
+        "crate4",
+        "admin",
+        &Version::try_from("1.0.0").unwrap(),
+        &created,
+    )
+    .await
+    .unwrap();
+    test_add_crate(
+        &test_db,
+        "crate5",
+        "admin",
+        &Version::try_from("1.0.0").unwrap(),
+        &created,
+    )
+    .await
+    .unwrap();
     test_db
         .increase_download_counter(
             &NormalizedName::from_unchecked_str("crate1"),
@@ -381,33 +401,33 @@ async fn get_max_version_from_id() {
     let created = Utc.with_ymd_and_hms(2020, 10, 7, 13, 18, 00).unwrap();
     let created1 = Utc.with_ymd_and_hms(2020, 10, 7, 13, 18, 00).unwrap();
     let created2 = Utc.with_ymd_and_hms(2020, 10, 8, 13, 18, 00).unwrap();
-    let crate_id1 = test_db
-        .test_add_crate(
-            "acrate",
-            "admin",
-            &Version::try_from("0.1.0").unwrap(),
-            &created,
-        )
-        .await
-        .unwrap();
-    test_db
-        .test_add_crate(
-            "acrate",
-            "admin",
-            &Version::try_from("0.2.0").unwrap(),
-            &created1,
-        )
-        .await
-        .unwrap();
-    test_db
-        .test_add_crate(
-            "acrate",
-            "admin",
-            &Version::try_from("0.10.0").unwrap(),
-            &created2,
-        )
-        .await
-        .unwrap();
+    let crate_id1 = test_add_crate(
+        &test_db,
+        "acrate",
+        "admin",
+        &Version::try_from("0.1.0").unwrap(),
+        &created,
+    )
+    .await
+    .unwrap();
+    test_add_crate(
+        &test_db,
+        "acrate",
+        "admin",
+        &Version::try_from("0.2.0").unwrap(),
+        &created1,
+    )
+    .await
+    .unwrap();
+    test_add_crate(
+        &test_db,
+        "acrate",
+        "admin",
+        &Version::try_from("0.10.0").unwrap(),
+        &created2,
+    )
+    .await
+    .unwrap();
 
     let version = test_db.get_max_version_from_id(crate_id1).await.unwrap();
 
@@ -419,33 +439,33 @@ async fn get_max_version_from_id() {
 async fn get_max_version_from_name() {
     let created1 = Utc.with_ymd_and_hms(2020, 10, 7, 13, 18, 00).unwrap();
     let created2 = Utc.with_ymd_and_hms(2020, 10, 8, 13, 18, 00).unwrap();
-    test_db
-        .test_add_crate(
-            "acrate",
-            "admin",
-            &Version::try_from("0.1.0").unwrap(),
-            &created1,
-        )
-        .await
-        .unwrap();
-    test_db
-        .test_add_crate(
-            "acrate",
-            "admin",
-            &Version::try_from("0.2.0").unwrap(),
-            &created1,
-        )
-        .await
-        .unwrap();
-    test_db
-        .test_add_crate(
-            "acrate",
-            "admin",
-            &Version::try_from("0.10.0").unwrap(),
-            &created2,
-        )
-        .await
-        .unwrap();
+    test_add_crate(
+        &test_db,
+        "acrate",
+        "admin",
+        &Version::try_from("0.1.0").unwrap(),
+        &created1,
+    )
+    .await
+    .unwrap();
+    test_add_crate(
+        &test_db,
+        "acrate",
+        "admin",
+        &Version::try_from("0.2.0").unwrap(),
+        &created1,
+    )
+    .await
+    .unwrap();
+    test_add_crate(
+        &test_db,
+        "acrate",
+        "admin",
+        &Version::try_from("0.10.0").unwrap(),
+        &created2,
+    )
+    .await
+    .unwrap();
 
     let version = test_db
         .get_max_version_from_name(&NormalizedName::from_unchecked("acrate".to_string()))
@@ -460,42 +480,42 @@ async fn get_max_version_from_name() {
 async fn get_crate_summaries_works() {
     let created1 = Utc.with_ymd_and_hms(2020, 10, 7, 13, 18, 00).unwrap();
     let created2 = Utc.with_ymd_and_hms(2020, 10, 8, 11, 22, 12).unwrap();
-    test_db
-        .test_add_crate(
-            "acrate",
-            "admin",
-            &Version::try_from("1.1.0").unwrap(),
-            &created1,
-        )
-        .await
-        .unwrap();
-    test_db
-        .test_add_crate(
-            "bcrate",
-            "admin",
-            &Version::try_from("1.1.0").unwrap(),
-            &created2,
-        )
-        .await
-        .unwrap();
-    test_db
-        .test_add_crate(
-            "acrate",
-            "admin",
-            &Version::try_from("1.2.0").unwrap(),
-            &created2,
-        )
-        .await
-        .unwrap();
-    test_db
-        .test_add_crate(
-            "bcrate",
-            "admin",
-            &Version::try_from("1.1.0").unwrap(),
-            &created1,
-        )
-        .await
-        .unwrap();
+    test_add_crate(
+        &test_db,
+        "acrate",
+        "admin",
+        &Version::try_from("1.1.0").unwrap(),
+        &created1,
+    )
+    .await
+    .unwrap();
+    test_add_crate(
+        &test_db,
+        "bcrate",
+        "admin",
+        &Version::try_from("1.1.0").unwrap(),
+        &created2,
+    )
+    .await
+    .unwrap();
+    test_add_crate(
+        &test_db,
+        "acrate",
+        "admin",
+        &Version::try_from("1.2.0").unwrap(),
+        &created2,
+    )
+    .await
+    .unwrap();
+    test_add_crate(
+        &test_db,
+        "bcrate",
+        "admin",
+        &Version::try_from("1.1.0").unwrap(),
+        &created1,
+    )
+    .await
+    .unwrap();
 
     let crates = test_db.get_crate_summaries().await.unwrap();
 
@@ -506,42 +526,42 @@ async fn get_crate_summaries_works() {
     assert_eq!("2020-10-08 11:22:12", crates[0].last_updated);
     let created1 = Utc.with_ymd_and_hms(2020, 10, 7, 13, 18, 00).unwrap();
     let created2 = Utc.with_ymd_and_hms(2020, 10, 8, 11, 22, 12).unwrap();
-    test_db
-        .test_add_crate(
-            "acrate",
-            "admin",
-            &Version::try_from("1.1.0").unwrap(),
-            &created1,
-        )
-        .await
-        .unwrap();
-    test_db
-        .test_add_crate(
-            "bcrate",
-            "admin",
-            &Version::try_from("1.1.0").unwrap(),
-            &created2,
-        )
-        .await
-        .unwrap();
-    test_db
-        .test_add_crate(
-            "acrate",
-            "admin",
-            &Version::try_from("1.2.0").unwrap(),
-            &created2,
-        )
-        .await
-        .unwrap();
-    test_db
-        .test_add_crate(
-            "bcrate",
-            "admin",
-            &Version::try_from("1.1.0").unwrap(),
-            &created1,
-        )
-        .await
-        .unwrap();
+    test_add_crate(
+        &test_db,
+        "acrate",
+        "admin",
+        &Version::try_from("1.1.0").unwrap(),
+        &created1,
+    )
+    .await
+    .unwrap();
+    test_add_crate(
+        &test_db,
+        "bcrate",
+        "admin",
+        &Version::try_from("1.1.0").unwrap(),
+        &created2,
+    )
+    .await
+    .unwrap();
+    test_add_crate(
+        &test_db,
+        "acrate",
+        "admin",
+        &Version::try_from("1.2.0").unwrap(),
+        &created2,
+    )
+    .await
+    .unwrap();
+    test_add_crate(
+        &test_db,
+        "bcrate",
+        "admin",
+        &Version::try_from("1.1.0").unwrap(),
+        &created1,
+    )
+    .await
+    .unwrap();
 
     let crates = test_db.get_crate_summaries().await.unwrap();
 
@@ -561,33 +581,33 @@ async fn get_crate_summaries_works() {
 #[tokio::test]
 async fn get_crate_versions_returns_all_versions() {
     let created = Utc.with_ymd_and_hms(2020, 10, 7, 13, 18, 00).unwrap();
-    test_db
-        .test_add_crate(
-            "crate1",
-            "admin",
-            &Version::try_from("1.0.0").unwrap(),
-            &created,
-        )
-        .await
-        .unwrap();
-    test_db
-        .test_add_crate(
-            "crate1",
-            "admin",
-            &Version::try_from("2.0.0").unwrap(),
-            &created,
-        )
-        .await
-        .unwrap();
-    test_db
-        .test_add_crate(
-            "crate2",
-            "admin",
-            &Version::try_from("1.0.0").unwrap(),
-            &created,
-        )
-        .await
-        .unwrap();
+    test_add_crate(
+        &test_db,
+        "crate1",
+        "admin",
+        &Version::try_from("1.0.0").unwrap(),
+        &created,
+    )
+    .await
+    .unwrap();
+    test_add_crate(
+        &test_db,
+        "crate1",
+        "admin",
+        &Version::try_from("2.0.0").unwrap(),
+        &created,
+    )
+    .await
+    .unwrap();
+    test_add_crate(
+        &test_db,
+        "crate2",
+        "admin",
+        &Version::try_from("1.0.0").unwrap(),
+        &created,
+    )
+    .await
+    .unwrap();
 
     let versions = test_db
         .get_crate_versions(&NormalizedName::from_unchecked_str("crate1"))
@@ -605,24 +625,24 @@ async fn get_crate_versions_returns_all_versions() {
 #[tokio::test]
 async fn get_crate_versions_with_yanked_version() {
     let created = Utc.with_ymd_and_hms(2020, 10, 7, 13, 18, 00).unwrap();
-    test_db
-        .test_add_crate(
-            "crate",
-            "admin",
-            &Version::try_from("1.0.0").unwrap(),
-            &created,
-        )
-        .await
-        .unwrap();
-    test_db
-        .test_add_crate(
-            "crate",
-            "admin",
-            &Version::try_from("2.0.0").unwrap(),
-            &created,
-        )
-        .await
-        .unwrap();
+    test_add_crate(
+        &test_db,
+        "crate",
+        "admin",
+        &Version::try_from("1.0.0").unwrap(),
+        &created,
+    )
+    .await
+    .unwrap();
+    test_add_crate(
+        &test_db,
+        "crate",
+        "admin",
+        &Version::try_from("2.0.0").unwrap(),
+        &created,
+    )
+    .await
+    .unwrap();
 
     // Yank crate version 2.0.0
     test_db
@@ -661,25 +681,25 @@ async fn get_crate_versions_for_nonexistant_crate() {
 async fn test_add_crate_meta_and_read_meta() {
     let created1 = Utc.with_ymd_and_hms(2020, 10, 7, 13, 18, 00).unwrap();
     let created2 = Utc.with_ymd_and_hms(2020, 10, 8, 11, 22, 12).unwrap();
-    let crate_id = test_db
-        .test_add_crate(
-            "mycrate",
-            "admin",
-            &Version::try_from("0.1.0").unwrap(),
-            &created1,
-        )
-        .await
-        .unwrap();
-    test_db
-        .test_add_crate(
-            "mycrate",
-            "admin",
-            &Version::try_from("0.1.1").unwrap(),
-            &created2,
-        )
-        .await
-        .unwrap();
-    let meta = test_db.get_crate_meta_list(crate_id).await.unwrap();
+    let crate_id = test_add_crate(
+        &test_db,
+        "mycrate",
+        "admin",
+        &Version::try_from("0.1.0").unwrap(),
+        &created1,
+    )
+    .await
+    .unwrap();
+    test_add_crate(
+        &test_db,
+        "mycrate",
+        "admin",
+        &Version::try_from("0.1.1").unwrap(),
+        &created2,
+    )
+    .await
+    .unwrap();
+    let meta = get_crate_meta_list(&test_db, crate_id).await.unwrap();
 
     assert_eq!(2, meta.len());
     assert_eq!("0.1.0", meta[0].version);
@@ -693,15 +713,15 @@ async fn test_add_crate_meta_and_read_meta() {
 #[pg_testcontainer]
 #[tokio::test]
 async fn is_owner_true() {
-    test_db
-        .test_add_crate(
-            "mycrate",
-            "admin",
-            &Version::try_from("1.0.0").unwrap(),
-            &Utc::now(),
-        )
-        .await
-        .unwrap();
+    test_add_crate(
+        &test_db,
+        "mycrate",
+        "admin",
+        &Version::try_from("1.0.0").unwrap(),
+        &Utc::now(),
+    )
+    .await
+    .unwrap();
 
     assert!(test_db
         .is_owner(
@@ -715,15 +735,15 @@ async fn is_owner_true() {
 #[pg_testcontainer]
 #[tokio::test]
 async fn is_owner_false() {
-    test_db
-        .test_add_crate(
-            "mycrate",
-            "admin",
-            &Version::try_from("1.0.0").unwrap(),
-            &Utc::now(),
-        )
-        .await
-        .unwrap();
+    test_add_crate(
+        &test_db,
+        "mycrate",
+        "admin",
+        &Version::try_from("1.0.0").unwrap(),
+        &Utc::now(),
+    )
+    .await
+    .unwrap();
 
     assert!(!test_db
         .is_owner(
@@ -737,15 +757,15 @@ async fn is_owner_false() {
 #[pg_testcontainer]
 #[tokio::test]
 async fn delete_owner_valid_owner() {
-    test_db
-        .test_add_crate(
-            "mycrate",
-            "admin",
-            &Version::try_from("1.0.0").unwrap(),
-            &Utc::now(),
-        )
-        .await
-        .unwrap();
+    test_add_crate(
+        &test_db,
+        "mycrate",
+        "admin",
+        &Version::try_from("1.0.0").unwrap(),
+        &Utc::now(),
+    )
+    .await
+    .unwrap();
 
     test_db.delete_owner("mycrate", "admin").await.unwrap();
 
@@ -758,24 +778,24 @@ async fn delete_owner_valid_owner() {
 #[pg_testcontainer]
 #[tokio::test]
 async fn test_add_crate_duplicate() {
-    test_db
-        .test_add_crate(
-            "mycrate",
-            "admin",
-            &Version::try_from("1.0.0").unwrap(),
-            &Utc::now(),
-        )
-        .await
-        .unwrap();
-    test_db
-        .test_add_crate(
-            "mycrate",
-            "admin",
-            &Version::try_from("1.0.0").unwrap(),
-            &Utc::now(),
-        )
-        .await
-        .unwrap();
+    test_add_crate(
+        &test_db,
+        "mycrate",
+        "admin",
+        &Version::try_from("1.0.0").unwrap(),
+        &Utc::now(),
+    )
+    .await
+    .unwrap();
+    test_add_crate(
+        &test_db,
+        "mycrate",
+        "admin",
+        &Version::try_from("1.0.0").unwrap(),
+        &Utc::now(),
+    )
+    .await
+    .unwrap();
 
     let owners = test_db
         .get_crate_owners(&NormalizedName::from_unchecked("mycrate".to_string()))
@@ -991,8 +1011,7 @@ async fn clean_db_after_time() {
 
     let duration = std::time::Duration::from_secs(2);
     std::thread::sleep(duration);
-    test_db
-        .clean_db(std::time::Duration::from_secs(1))
+    clean_db(&test_db, std::time::Duration::from_secs(1))
         .await
         .unwrap();
 
@@ -1083,17 +1102,16 @@ async fn authenticate_user_wrong_pwd() {
 #[pg_testcontainer]
 #[tokio::test]
 async fn crate_version_exists_with_existing_version() {
-    let id = test_db
-        .test_add_crate(
-            "foobar",
-            "admin",
-            &Version::try_from("1.0.0").unwrap(),
-            &Utc::now(),
-        )
-        .await
-        .unwrap();
-    test_db
-        .test_add_crate_meta(id, "1.0.0", &Utc::now(), None)
+    let id = test_add_crate(
+        &test_db,
+        "foobar",
+        "admin",
+        &Version::try_from("1.0.0").unwrap(),
+        &Utc::now(),
+    )
+    .await
+    .unwrap();
+    test_add_crate_meta(&test_db, id, "1.0.0", &Utc::now(), None)
         .await
         .unwrap();
 
@@ -1106,15 +1124,15 @@ async fn crate_version_exists_with_existing_version() {
 #[pg_testcontainer]
 #[tokio::test]
 async fn crate_version_exists_with_no_existing_version() {
-    let id = test_db
-        .test_add_crate(
-            "foobar",
-            "admin",
-            &Version::try_from("1.0.0").unwrap(),
-            &Utc::now(),
-        )
-        .await
-        .unwrap();
+    let id = test_add_crate(
+        &test_db,
+        "foobar",
+        "admin",
+        &Version::try_from("1.0.0").unwrap(),
+        &Utc::now(),
+    )
+    .await
+    .unwrap();
 
     assert_eq!(
         false,
@@ -1125,25 +1143,25 @@ async fn crate_version_exists_with_no_existing_version() {
 #[pg_testcontainer]
 #[tokio::test]
 async fn get_total_unique_crates_returns_correct_number() {
-    let _ = test_db
-        .test_add_crate(
-            "foobar",
-            "admin",
-            &Version::try_from("1.0.0").unwrap(),
-            &Utc::now(),
-        )
-        .await
-        .unwrap();
+    let _ = test_add_crate(
+        &test_db,
+        "foobar",
+        "admin",
+        &Version::try_from("1.0.0").unwrap(),
+        &Utc::now(),
+    )
+    .await
+    .unwrap();
 
-    let _ = test_db
-        .test_add_crate(
-            "bar",
-            "admin",
-            &Version::try_from("1.0.0").unwrap(),
-            &Utc::now(),
-        )
-        .await
-        .unwrap();
+    let _ = test_add_crate(
+        &test_db,
+        "bar",
+        "admin",
+        &Version::try_from("1.0.0").unwrap(),
+        &Utc::now(),
+    )
+    .await
+    .unwrap();
 
     assert_eq!(2, test_db.get_total_unique_crates().await.unwrap());
 }
@@ -1232,33 +1250,33 @@ async fn delete_doc_queue_entry() {
 #[tokio::test]
 async fn delete_crate_one_of_multiple_versions() {
     let created = Utc.with_ymd_and_hms(2020, 10, 7, 13, 18, 00).unwrap();
-    test_db
-        .test_add_crate(
-            "crate",
-            "admin",
-            &Version::try_from("1.0.0").unwrap(),
-            &created,
-        )
-        .await
-        .unwrap();
-    test_db
-        .test_add_crate(
-            "crate",
-            "admin",
-            &Version::try_from("2.0.0").unwrap(),
-            &created,
-        )
-        .await
-        .unwrap();
-    test_db
-        .test_add_crate(
-            "crate",
-            "admin",
-            &Version::try_from("3.0.0").unwrap(),
-            &created,
-        )
-        .await
-        .unwrap();
+    test_add_crate(
+        &test_db,
+        "crate",
+        "admin",
+        &Version::try_from("1.0.0").unwrap(),
+        &created,
+    )
+    .await
+    .unwrap();
+    test_add_crate(
+        &test_db,
+        "crate",
+        "admin",
+        &Version::try_from("2.0.0").unwrap(),
+        &created,
+    )
+    .await
+    .unwrap();
+    test_add_crate(
+        &test_db,
+        "crate",
+        "admin",
+        &Version::try_from("3.0.0").unwrap(),
+        &created,
+    )
+    .await
+    .unwrap();
     let total_versions_before = test_db.get_total_crate_versions().await.unwrap();
 
     test_db
@@ -1269,7 +1287,7 @@ async fn delete_crate_one_of_multiple_versions() {
         .await
         .unwrap();
 
-    let summaries = test_db.get_crate_meta_list(1).await.unwrap();
+    let summaries = get_crate_meta_list(&test_db, 1).await.unwrap();
     let krate = test_db
         .get_crate_id(&NormalizedName::from_unchecked("crate".to_string()))
         .await
@@ -1285,33 +1303,33 @@ async fn delete_crate_one_of_multiple_versions() {
 #[tokio::test]
 async fn delete_crate_max_version() {
     let created = Utc.with_ymd_and_hms(2020, 10, 7, 13, 18, 00).unwrap();
-    test_db
-        .test_add_crate(
-            "crate",
-            "admin",
-            &Version::try_from("1.0.0").unwrap(),
-            &created,
-        )
-        .await
-        .unwrap();
-    test_db
-        .test_add_crate(
-            "crate",
-            "admin",
-            &Version::try_from("2.0.0").unwrap(),
-            &created,
-        )
-        .await
-        .unwrap();
-    test_db
-        .test_add_crate(
-            "crate",
-            "admin",
-            &Version::try_from("3.0.0").unwrap(),
-            &created,
-        )
-        .await
-        .unwrap();
+    test_add_crate(
+        &test_db,
+        "crate",
+        "admin",
+        &Version::try_from("1.0.0").unwrap(),
+        &created,
+    )
+    .await
+    .unwrap();
+    test_add_crate(
+        &test_db,
+        "crate",
+        "admin",
+        &Version::try_from("2.0.0").unwrap(),
+        &created,
+    )
+    .await
+    .unwrap();
+    test_add_crate(
+        &test_db,
+        "crate",
+        "admin",
+        &Version::try_from("3.0.0").unwrap(),
+        &created,
+    )
+    .await
+    .unwrap();
     let total_versions_before = test_db.get_total_crate_versions().await.unwrap();
 
     test_db
@@ -1322,7 +1340,7 @@ async fn delete_crate_max_version() {
         .await
         .unwrap();
 
-    let crate_metas = test_db.get_crate_meta_list(1).await.unwrap();
+    let crate_metas = get_crate_meta_list(&test_db, 1).await.unwrap();
     let krate = test_db
         .get_crate_id(&NormalizedName::from_unchecked("crate".to_string()))
         .await
@@ -1341,15 +1359,15 @@ async fn delete_crate_max_version() {
 #[tokio::test]
 async fn delete_crate_only_versions() {
     let created = Utc.with_ymd_and_hms(2020, 10, 7, 13, 18, 00).unwrap();
-    test_db
-        .test_add_crate(
-            "crate",
-            "admin",
-            &Version::try_from("1.0.0").unwrap(),
-            &created,
-        )
-        .await
-        .unwrap();
+    test_add_crate(
+        &test_db,
+        "crate",
+        "admin",
+        &Version::try_from("1.0.0").unwrap(),
+        &created,
+    )
+    .await
+    .unwrap();
     let total_versions_before = test_db.get_total_crate_versions().await.unwrap();
 
     test_db
@@ -1360,7 +1378,7 @@ async fn delete_crate_only_versions() {
         .await
         .unwrap();
 
-    let summaries = test_db.get_crate_meta_list(1).await.unwrap();
+    let summaries = get_crate_meta_list(&test_db, 1).await.unwrap();
     let krate = test_db
         .get_crate_id(&NormalizedName::from_unchecked("crate".to_string()))
         .await
@@ -1375,86 +1393,86 @@ async fn delete_crate_only_versions() {
 async fn search_in_crate_name_found_match() {
     let created = Utc.with_ymd_and_hms(2020, 10, 7, 13, 18, 00).unwrap();
     let created_string = created.format("%Y-%m-%d %H:%M:%S").to_string();
-    test_db
-        .test_add_crate_with_downloads(
-            "crate",
-            "admin",
-            &Version::try_from("1.0.0").unwrap(),
-            &created,
-            Some(4),
-        )
-        .await
-        .unwrap();
-    test_db
-        .test_add_crate_with_downloads(
-            "crate",
-            "admin",
-            &Version::try_from("2.2.0").unwrap(),
-            &created,
-            Some(4),
-        )
-        .await
-        .unwrap();
-    test_db
-        .test_add_crate_with_downloads(
-            "foo_crate",
-            "admin",
-            &Version::try_from("1.0.0").unwrap(),
-            &created,
-            Some(3),
-        )
-        .await
-        .unwrap();
-    test_db
-        .test_add_crate_with_downloads(
-            "foo_crate",
-            "admin",
-            &Version::try_from("2.0.0").unwrap(),
-            &created,
-            Some(3),
-        )
-        .await
-        .unwrap();
-    test_db
-        .test_add_crate_with_downloads(
-            "crate_foo",
-            "admin",
-            &Version::try_from("1.0.0").unwrap(),
-            &created,
-            Some(5),
-        )
-        .await
-        .unwrap();
-    test_db
-        .test_add_crate_with_downloads(
-            "crate_foo",
-            "admin",
-            &Version::try_from("3.0.0").unwrap(),
-            &created,
-            Some(5),
-        )
-        .await
-        .unwrap();
-    test_db
-        .test_add_crate_with_downloads(
-            "no_match",
-            "admin",
-            &Version::try_from("1.0.0").unwrap(),
-            &created,
-            Some(1),
-        )
-        .await
-        .unwrap();
-    test_db
-        .test_add_crate_with_downloads(
-            "no_match",
-            "admin",
-            &Version::try_from("2.0.0").unwrap(),
-            &created,
-            Some(1),
-        )
-        .await
-        .unwrap();
+    test_add_crate_with_downloads(
+        &test_db,
+        "crate",
+        "admin",
+        &Version::try_from("1.0.0").unwrap(),
+        &created,
+        Some(4),
+    )
+    .await
+    .unwrap();
+    test_add_crate_with_downloads(
+        &test_db,
+        "crate",
+        "admin",
+        &Version::try_from("2.2.0").unwrap(),
+        &created,
+        Some(4),
+    )
+    .await
+    .unwrap();
+    test_add_crate_with_downloads(
+        &test_db,
+        "foo_crate",
+        "admin",
+        &Version::try_from("1.0.0").unwrap(),
+        &created,
+        Some(3),
+    )
+    .await
+    .unwrap();
+    test_add_crate_with_downloads(
+        &test_db,
+        "foo_crate",
+        "admin",
+        &Version::try_from("2.0.0").unwrap(),
+        &created,
+        Some(3),
+    )
+    .await
+    .unwrap();
+    test_add_crate_with_downloads(
+        &test_db,
+        "crate_foo",
+        "admin",
+        &Version::try_from("1.0.0").unwrap(),
+        &created,
+        Some(5),
+    )
+    .await
+    .unwrap();
+    test_add_crate_with_downloads(
+        &test_db,
+        "crate_foo",
+        "admin",
+        &Version::try_from("3.0.0").unwrap(),
+        &created,
+        Some(5),
+    )
+    .await
+    .unwrap();
+    test_add_crate_with_downloads(
+        &test_db,
+        "no_match",
+        "admin",
+        &Version::try_from("1.0.0").unwrap(),
+        &created,
+        Some(1),
+    )
+    .await
+    .unwrap();
+    test_add_crate_with_downloads(
+        &test_db,
+        "no_match",
+        "admin",
+        &Version::try_from("2.0.0").unwrap(),
+        &created,
+        Some(1),
+    )
+    .await
+    .unwrap();
     let expected = vec![
         CrateOverview {
             name: "crate".to_string(),
@@ -1489,66 +1507,66 @@ async fn search_in_crate_name_found_match() {
 async fn get_crate_overview_list() {
     let created = Utc.with_ymd_and_hms(2020, 10, 7, 13, 18, 00).unwrap();
     let created_string = created.format("%Y-%m-%d %H:%M:%S").to_string();
-    test_db
-        .test_add_crate_with_downloads(
-            "crate",
-            "admin",
-            &Version::try_from("1.0.0").unwrap(),
-            &created,
-            Some(4),
-        )
-        .await
-        .unwrap();
-    test_db
-        .test_add_crate_with_downloads(
-            "crate",
-            "admin",
-            &Version::try_from("2.2.0").unwrap(),
-            &created,
-            Some(4),
-        )
-        .await
-        .unwrap();
-    test_db
-        .test_add_crate_with_downloads(
-            "foo_crate",
-            "admin",
-            &Version::try_from("1.0.0").unwrap(),
-            &created,
-            Some(3),
-        )
-        .await
-        .unwrap();
-    test_db
-        .test_add_crate_with_downloads(
-            "foo_crate",
-            "admin",
-            &Version::try_from("2.0.0").unwrap(),
-            &created,
-            Some(3),
-        )
-        .await
-        .unwrap();
-    test_db
-        .test_add_crate_with_downloads(
-            "crate_foo",
-            "admin",
-            &Version::try_from("1.0.0").unwrap(),
-            &created,
-            Some(5),
-        )
-        .await
-        .unwrap();
-    test_db
-        .test_add_crate_with_downloads(
-            "crate_foo",
-            "admin",
-            &Version::try_from("3.0.0").unwrap(),
-            &created,
-            Some(5),
-        )
-        .await
-        .unwrap();
+    test_add_crate_with_downloads(
+        &test_db,
+        "crate",
+        "admin",
+        &Version::try_from("1.0.0").unwrap(),
+        &created,
+        Some(4),
+    )
+    .await
+    .unwrap();
+    test_add_crate_with_downloads(
+        &test_db,
+        "crate",
+        "admin",
+        &Version::try_from("2.2.0").unwrap(),
+        &created,
+        Some(4),
+    )
+    .await
+    .unwrap();
+    test_add_crate_with_downloads(
+        &test_db,
+        "foo_crate",
+        "admin",
+        &Version::try_from("1.0.0").unwrap(),
+        &created,
+        Some(3),
+    )
+    .await
+    .unwrap();
+    test_add_crate_with_downloads(
+        &test_db,
+        "foo_crate",
+        "admin",
+        &Version::try_from("2.0.0").unwrap(),
+        &created,
+        Some(3),
+    )
+    .await
+    .unwrap();
+    test_add_crate_with_downloads(
+        &test_db,
+        "crate_foo",
+        "admin",
+        &Version::try_from("1.0.0").unwrap(),
+        &created,
+        Some(5),
+    )
+    .await
+    .unwrap();
+    test_add_crate_with_downloads(
+        &test_db,
+        "crate_foo",
+        "admin",
+        &Version::try_from("3.0.0").unwrap(),
+        &created,
+        Some(5),
+    )
+    .await
+    .unwrap();
     let expected = vec![
         CrateOverview {
             name: "crate".to_string(),
@@ -2033,24 +2051,24 @@ async fn update_docs_link() {
 async fn get_prefetch_data_with_minimal_data() {
     let created1 = Utc.with_ymd_and_hms(2020, 10, 7, 13, 18, 00).unwrap();
     let created2 = Utc.with_ymd_and_hms(2020, 10, 8, 13, 18, 00).unwrap();
-    test_db
-        .test_add_crate(
-            "crate",
-            "admin",
-            &Version::from_unchecked_str("1.0.0"),
-            &created1,
-        )
-        .await
-        .unwrap();
-    test_db
-        .test_add_crate(
-            "crate",
-            "admin",
-            &Version::from_unchecked_str("2.0.0"),
-            &created2,
-        )
-        .await
-        .unwrap();
+    test_add_crate(
+        &test_db,
+        "crate",
+        "admin",
+        &Version::from_unchecked_str("1.0.0"),
+        &created1,
+    )
+    .await
+    .unwrap();
+    test_add_crate(
+        &test_db,
+        "crate",
+        "admin",
+        &Version::from_unchecked_str("2.0.0"),
+        &created2,
+    )
+    .await
+    .unwrap();
 
     let prefetch_data = test_db.get_prefetch_data("crate").await.unwrap();
 
@@ -2453,15 +2471,15 @@ async fn is_cratesio_cache_up_to_date_needs_update() {
 #[tokio::test]
 async fn un_yank_crate() {
     let created = Utc.with_ymd_and_hms(2020, 10, 7, 13, 18, 00).unwrap();
-    test_db
-        .test_add_crate(
-            "crate",
-            "admin",
-            &Version::from_unchecked_str("1.0.0"),
-            &created,
-        )
-        .await
-        .unwrap();
+    test_add_crate(
+        &test_db,
+        "crate",
+        "admin",
+        &Version::from_unchecked_str("1.0.0"),
+        &created,
+    )
+    .await
+    .unwrap();
 
     // Yank the version
     test_db
@@ -2514,41 +2532,41 @@ async fn test_get_last_updated_crate_works() {
     let created1 = DateTime::parse_from_rfc3339("2021-01-01T00:00:00Z").unwrap();
     let created1 = DateTime::<Utc>::from(created1);
 
-    test_db
-        .test_add_crate(
-            "my_crate",
-            "admin",
-            &Version::from_unchecked_str("1.0.0"),
-            &created1,
-        )
-        .await
-        .unwrap();
+    test_add_crate(
+        &test_db,
+        "my_crate",
+        "admin",
+        &Version::from_unchecked_str("1.0.0"),
+        &created1,
+    )
+    .await
+    .unwrap();
 
     let created2 = DateTime::parse_from_rfc3339("2021-02-01T00:00:00Z").unwrap();
     let created2 = DateTime::<Utc>::from(created2);
 
-    test_db
-        .test_add_crate(
-            "my_crate",
-            "admin",
-            &Version::from_unchecked_str("2.0.0"),
-            &created2,
-        )
-        .await
-        .unwrap();
+    test_add_crate(
+        &test_db,
+        "my_crate",
+        "admin",
+        &Version::from_unchecked_str("2.0.0"),
+        &created2,
+    )
+    .await
+    .unwrap();
 
     let created3 = DateTime::parse_from_rfc3339("2021-03-01T00:00:00Z").unwrap();
     let created3 = DateTime::<Utc>::from(created3);
 
-    test_db
-        .test_add_crate(
-            "my_crate2",
-            "admin",
-            &Version::from_unchecked_str("1.0.0"),
-            &created3,
-        )
-        .await
-        .unwrap();
+    test_add_crate(
+        &test_db,
+        "my_crate2",
+        "admin",
+        &Version::from_unchecked_str("1.0.0"),
+        &created3,
+    )
+    .await
+    .unwrap();
 
     let last_updated = test_db.get_last_updated_crate().await.unwrap().unwrap();
 
@@ -2566,18 +2584,15 @@ async fn test_get_last_updated_crate_empty() {
 #[pg_testcontainer]
 #[tokio::test]
 async fn test_get_total_unique_cached_crates_works() {
-    test_db
-        .test_add_cached_crate("my_crate", "1.0.0")
+    test_add_cached_crate(&test_db, "my_crate", "1.0.0")
         .await
         .unwrap();
 
-    test_db
-        .test_add_cached_crate("my_crate", "2.0.0")
+    test_add_cached_crate(&test_db, "my_crate", "2.0.0")
         .await
         .unwrap();
 
-    test_db
-        .test_add_cached_crate("my_crate2", "1.0.0")
+    test_add_cached_crate(&test_db, "my_crate2", "1.0.0")
         .await
         .unwrap();
 
@@ -2589,18 +2604,15 @@ async fn test_get_total_unique_cached_crates_works() {
 #[pg_testcontainer]
 #[tokio::test]
 async fn test_get_total_cached_crate_versions_works() {
-    test_db
-        .test_add_cached_crate("my_crate", "1.0.0")
+    test_add_cached_crate(&test_db, "my_crate", "1.0.0")
         .await
         .unwrap();
 
-    test_db
-        .test_add_cached_crate("my_crate", "2.0.0")
+    test_add_cached_crate(&test_db, "my_crate", "2.0.0")
         .await
         .unwrap();
 
-    test_db
-        .test_add_cached_crate("my_crate2", "1.0.0")
+    test_add_cached_crate(&test_db, "my_crate2", "1.0.0")
         .await
         .unwrap();
 
@@ -2612,18 +2624,15 @@ async fn test_get_total_cached_crate_versions_works() {
 #[pg_testcontainer]
 #[tokio::test]
 async fn test_get_total_cached_downloads_works() {
-    test_db
-        .test_add_cached_crate_with_downloads("my_crate", "1.0.0", 10)
+    test_add_cached_crate_with_downloads(&test_db, "my_crate", "1.0.0", 10)
         .await
         .unwrap();
 
-    test_db
-        .test_add_cached_crate_with_downloads("my_crate", "2.0.0", 20)
+    test_add_cached_crate_with_downloads(&test_db, "my_crate", "2.0.0", 20)
         .await
         .unwrap();
 
-    test_db
-        .test_add_cached_crate_with_downloads("my_crate2", "1.0.0", 30)
+    test_add_cached_crate_with_downloads(&test_db, "my_crate2", "1.0.0", 30)
         .await
         .unwrap();
 
